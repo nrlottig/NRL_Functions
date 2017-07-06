@@ -1,12 +1,22 @@
 #Script to identify time windows and missing data rates for time series analysis of multiple different systems.
-data = subset(LAGOS_summer_meanvals,LAGOS_summer_meanvals$variable=="chl_ugL")
-data = data[,c(1:3)]
-data3 = dcast(data,lagoslakeid~sampleyear)
 
+#Check to make sure you have all the needed packages installed
+packages <- c("RCurl", "reshape2", "zoo")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
 
+require(RCurl)
+
+#Example data file take from Oliver et al. 2017 (chla data)
+dat = read.csv(text=getURL("https://raw.githubusercontent.com/nrlottig/NRL_Functions/master/datafiles/data_optimize_ts_window.csv"), header=T)
+
+#Function for identifying optimal/maximum time series and time periods of record based on two input criteria
+#record.length is length or long-term record to be analyzed or vector of potential long-term record lengths
+#missing.freq is the extent of missing data allowed (single value or vector of values) as percent of data (e.g., 10%)
 TS.Length = function(data,record.length,missing.freq){
-  library(reshape2)
-  library(zoo)
+  require(reshape2)
+  require(zoo)
   #Misc functions needed
   RL <- function(data){sum(!is.na(data))}
   count.records = function(data){sum(data>=missing.freq.t[j])}
@@ -24,7 +34,7 @@ TS.Length = function(data,record.length,missing.freq){
       new.data[i,2:ncol(new.data)] = rollapply(x.temp,width = record.length[x],FUN=RL)
     }
 
-    missing.freq.t = record.length[x] - (missing.freq/100*record.length[x])
+    missing.freq.t = floor(record.length[x] - (missing.freq/100*record.length[x]))
     summary.data = data.frame(matrix(NA, nrow=length(missing.freq.t), ncol=ncol(new.data)))
 
     for(j in 1:length(missing.freq.t)){
@@ -35,20 +45,25 @@ TS.Length = function(data,record.length,missing.freq){
     }
 
     names(summary.data)[2:ncol(summary.data)] = names(data[2:ncol(summary.data)])
+    names(summary.data)[1] = "min_rec_len"
 
     for(z in 1:nrow(summary.data)){
       out.data[x,z] = max(summary.data[z,2:ncol(summary.data)])
     }
   }
-  matplot(out.data,type="l",xlab="Years of Data",xaxt="n",ylab="Number of Lakes")
-  axis(side=1,at=c(1:nrow(out.data)),labels=row.names(out.data))
-  legend('topright',legend=missing.freq,lwd=2,col=c(1:length(missing.freq)),title="Freq. of Missing Data (%)")
-  if(length(record.length==1)){
+  
+  if(length(record.length)==1){
     return(summary.data)
     break()
   }
+  matplot(out.data,type="l",xlab="Maximum Years of Data",xaxt="n",ylab="Number of Lakes")
+  axis(side=1,at=c(1:nrow(out.data)),labels=row.names(out.data))
+  legend('topright',legend=missing.freq,lwd=2,col=c(1:length(missing.freq)),title="Freq. of Missing Data (%)")
   return(out.data)
 }
 
-temp=TS.Length(data = data3,record.length = c(10:24),missing.freq = c(10,20,30,40))
-temp=TS.Length(data = data3,record.length = 20,missing.freq = c(10,20,30,40))
+#Example of running code
+temp=TS.Length(data = dat,record.length = c(10:24),missing.freq = c(10,20,30,40))
+#Run with a single length of time to extract table of when to start time series
+temp=TS.Length(data = dat,record.length = 20,missing.freq = c(10,20,30,40))
+#Look at output file. 530 lakes have 14-20 years of data (30% max missing data) starting with 1994.
