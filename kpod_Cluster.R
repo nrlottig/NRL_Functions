@@ -78,6 +78,8 @@ assign_clustpp <- function(X,init_centers,kmpp_flag=TRUE,max_iter=10000){
   # fit <- 1-(sum(res$withinss)/res$totss)
   fit <- sum(res$withinss)
   centers <- res$centers
+  m.sil = silhouette(res$cluster, dist(X))
+  m.sil = mean(m.sil[,3])
   if (kmpp_flag == TRUE) {
     ## Try to find a better assignment
     for (iter in 1:max_iter) {
@@ -89,11 +91,13 @@ assign_clustpp <- function(X,init_centers,kmpp_flag=TRUE,max_iter=10000){
         # fit <- 1-(sum(sol$withinss)/sol$toss)
         fit <- sum(sol$withinss)
         centers <- sol$centers
+        m.sil = silhouette(res$cluster, dist(X))
+        m.sil = mean(m.sil[,3])
         break
       }
     }
   }
-  return(list(clusts=clusts,obj=obj,centers=centers,fit=fit))
+  return(list(clusts=clusts,obj=obj,centers=centers,fit=fit,silh=m.sil))
 }
 
 #' Function for finding indices of missing data in a matrix
@@ -192,6 +196,7 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
   cluster_vals <- vector(mode="list",length=maxiter)
   obj_vals <- double(maxiter)
   fit <- double(maxiter)
+  m.sil <- double(maxiter)
   
   missing <- findMissing(X)
   
@@ -204,7 +209,9 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
   clusts <- temp$cluster
   centers <- temp$centers
   # fit[1] <- 1-(sum(temp$withinss)/temp$totss)
-  fit[1] <- sum(temp$withinss)
+  fit[1] <- sum(temp$withinss)        
+  t.sil = silhouette(temp$cluster, dist(X_copy))
+  m.sil[1] = mean(t.sil[,3])
   
   # Make cluster matrix
   clustMat <- centers[clusts,]
@@ -222,6 +229,8 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
     clusts <- temp$clusts
     centers <- temp$centers
     fit[i] <- temp$fit
+    t.sil = silhouette(temp$clusts, dist(X_copy))
+    m.sil[i] = mean(t.sil[,3])
     
     # Impute clusters
     clustMat <- centers[clusts,]
@@ -232,11 +241,11 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
     
     if (all(cluster_vals[[i]] == cluster_vals[[i-1]])){
       noquote('Clusters have converged.')
-      return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i]))
+      return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i],silh=m.sil[i],silh_list=m.sil[1:i]))
       break
     }
   }
-  return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i]))
+  return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i],silh=m.sil[i],silh_list=m.sil[1:i]))
 }
 
 #' k-means++
