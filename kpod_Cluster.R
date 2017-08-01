@@ -72,7 +72,7 @@ makeData <- function(p,n,k,sigma,missing,seed=12345){
 #' 
 #' @author Jocelyn T. Chi
 assign_clustpp <- function(X,init_centers,kmpp_flag=TRUE,max_iter=10000){
-  res <- kmeans(X, init_centers,iter.max = 10000,nstart = 500)
+  res <- kmeans(X, init_centers,iter.max = 10000,nstart = 200)
   clusts <- res$cluster
   obj <- res$totss
   # fit <- 1-(sum(res$withinss)/res$totss)
@@ -82,7 +82,7 @@ assign_clustpp <- function(X,init_centers,kmpp_flag=TRUE,max_iter=10000){
     ## Try to find a better assignment
     for (iter in 1:max_iter) {
       centers_kmpp <- kmpp(X,length(res$size))
-      sol <- kmeans(X, centers_kmpp,iter.max = 10000,nstart = 500)
+      sol <- kmeans(X, centers_kmpp,iter.max = 10000,nstart = 200)
       if (sol$totss < obj) {
         obj <- sol$totss
         clusts <- sol$cluster
@@ -161,7 +161,7 @@ initialImpute <- function(X){
 #' @return cluster: Clustering assignment obtained with k-POD
 #' @return cluster_list: List containing clustering assignments obtained in each iteration
 #' @return obj_vals: List containing the k-means objective function in each iteration
-#' @return fit: Fit of clustering assignment obtained with k-POD (calculated as 1-(total withinss/totss))
+#' @return fit: Fit of clustering assignment obtained with k-POD (calculated as total withinss))
 #' @return fit_list: List containing fit of clustering assignment obtained in each iteration
 #' 
 #' @export
@@ -184,7 +184,7 @@ initialImpute <- function(X){
 #' 
 #' @author Jocelyn T. Chi
 #' 
-kpod <- function(X,k,kmpp_flag=TRUE,maxiter=1000){
+kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
   
   n <- nrow(X)
   p <- ncol(X)
@@ -200,7 +200,7 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=1000){
   
   ## Use kmpp to select initial centers
   init_centers <- kmpp(X_copy, k)
-  temp <- kmeans(X_copy,init_centers,iter.max = 10000,nstart = 500)
+  temp <- kmeans(X_copy,init_centers,iter.max = 10000,nstart = 200)
   clusts <- temp$cluster
   centers <- temp$centers
   # fit[1] <- 1-(sum(temp$withinss)/temp$totss)
