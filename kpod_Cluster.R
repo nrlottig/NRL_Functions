@@ -173,18 +173,18 @@ initialImpute <- function(X){
 #' @import clues
 #' 
 #' @examples
-#' p <- 5
-#' n <- 200
-#' k <- 3
-#' sigma <- 0.15
-#' missing <- 0.20
-#' Data <- makeData(p,n,k,sigma,missing)
-#' X <- Data$Missing
-#' Orig <- Data$Orig
-#' truth <- Data$truth
-#' 
-#' kpod_result <- kpod(X,k)
-#' kpodclusters <- kpod_result$cluster
+# p <- 5
+# n <- 200
+# k <- 3
+# sigma <- 0.15
+# missing <- 0.20
+# Data <- makeData(p,n,k,sigma,missing)
+# X <- Data$Missing
+# Orig <- Data$Orig
+# truth <- Data$truth
+# 
+# kpod_result <- kpod(X,k)
+# kpodclusters <- kpod_result$cluster
 #' 
 #' @author Jocelyn T. Chi
 #' 
@@ -312,12 +312,14 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   }
   
   withinss_range = range(rand_fit,best_fit)
-  par(mfrow=c(4,1))
-  plot(no_clusters,best_fit,type="b",col="blue")
-  plot(no_clusters,rand_fit,ylim=withinss_range,type="b",col="red")
+  par(mfrow=c(4,1),mar=c(2.2,4,0,0),oma=c(3,0,.25,0.25))
+  plot(no_clusters,best_fit,type="b",col="blue",ylab="Total Within SS",xlab="")
+  plot(no_clusters,rand_fit,ylim=withinss_range,type="b",col="red",ylab="Total Within SS",xlab="")
   lines(no_clusters,best_fit,type="b",col="blue")
-  plot(no_clusters,(rand_fit-best_fit),type="b")
-  plot(no_clusters,sil_fit,type="b",col="green")
+  legend('topright',legend=c("Best Fit","Random Fit"),lty=1,col=c("blue","red"))
+  plot(no_clusters,(rand_fit-best_fit),type="b",ylab="Difference between Random & Best",xlab="")
+  plot(no_clusters,sil_fit,type="b",col="green",ylab = "Mean Silhouette Coefficient",xlab ="")
+  mtext(side=1,line=2.5,text = "Number of Clusters",cex=0.75)
   # plot(Cluster_Vec,(best_fit-rand_fit),type="l”)
   
   return(list(rand_SS=rand_fit,kpod_SS=best_fit,sil_val=sil_fit))
