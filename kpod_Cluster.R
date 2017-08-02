@@ -1,6 +1,7 @@
 #####Edits to kpod method to increase number of random starts and return sum of within group SS
 #####Last updated 1 Aug 2017 by Noah Lottig (nrlottig@wisc.edu)
 require(cluster)
+require(amap)
 
 #' Make test data
 #' 
