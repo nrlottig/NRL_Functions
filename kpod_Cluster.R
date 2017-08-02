@@ -284,3 +284,42 @@ kmpp <- function(X, k) {
   }
   return(X[C,])
 }
+
+######Function to estimate random Cluster Within SS for determining optimal number of clusters
+
+quant_no_clusters = function(X,no_clusters=2:7,boots=100){
+  #data should be standardized, rows are sites, columns are observations
+  n.cluster = length(no_clusters)
+  rand_fit = rep_len(NA,n.cluster)
+  best_fit = rep_len(NA,n.cluster)
+  sil_fit = rep_len(NA,n.cluster)
+  for (j in 1:n.cluster){
+    temp.fit = rep_len(NA, 100)
+    for(i in 1:boots){
+      set.seed(NULL)
+      X_copy = initialImpute(X)
+      tryCatch({
+        seg=NA
+        (temp <- kmeans(X_copy,no_clusters[j],iter.max = 1,nstart = 1))
+      },error=function(e){})
+      
+      temp.fit[i] = sum(temp$withinss)
+    }
+    rand_fit[j] = mean(temp.fit)
+    kpod_fit = kpod(X,no_clusters[j],kmpp_flag = TRUE)
+    best_fit[j] = kpod_fit$fit
+    sil_fit[j] = kpod_fit$silh
+  }
+  
+  withinss_range = range(rand_fit,best_fit)
+  par(mfrow=c(4,1))
+  plot(no_clusters,best_fit,type="b",col="blue")
+  plot(no_clusters,rand_fit,ylim=withinss_range,type="b",col="red")
+  lines(no_clusters,best_fit,type="b",col="blue")
+  plot(no_clusters,(rand_fit-best_fit),type="b")
+  plot(no_clusters,sil_fit,type="b",col="green")
+  # plot(Cluster_Vec,(best_fit-rand_fit),type="l”)
+  
+  return(list(rand_SS=rand_fit,kpod_SS=best_fit,sil_val=sil_fit))
+}
+
