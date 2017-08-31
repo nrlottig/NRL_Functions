@@ -289,27 +289,33 @@ kmpp <- function(X, k) {
 
 quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   #data should be standardized, rows are sites, columns are observations
+  require(GMD)
   n.cluster = length(no_clusters)
   rand_fit = rep_len(NA,n.cluster)
   best_fit = rep_len(NA,n.cluster)
   sil_fit = rep_len(NA,n.cluster)
+  pb <- txtProgressBar(min = 1, max = max(no_clusters), style = 3)
   for (j in 1:n.cluster){
-    temp.fit = rep_len(NA, 100)
+    temp.fit = rep_len(NA, boots)
     for(i in 1:boots){
       set.seed(NULL)
       X_copy = initialImpute(X)
-      tryCatch({
-        seg=NA
-        (temp <- kmeans(X_copy,no_clusters[j],iter.max = 1,nstart = 1))
-      },error=function(e){})
+      temp = css(dist(X_copy),sample(x = c(1:no_clusters[j]),replace = TRUE,size = nrow(X_copy)))
       
-      temp.fit[i] = sum(temp$withinss)
+          # tryCatch({
+        # seg=NA
+        # (temp <- kmeans(X_copy,no_clusters[j],iter.max = 1,nstart = 1))
+      # },error=function(e){})
+      
+      temp.fit[i] = temp$totwss
     }
     rand_fit[j] = mean(temp.fit)
     kpod_fit = kpod(X,no_clusters[j],kmpp_flag = TRUE)
     best_fit[j] = kpod_fit$fit
     sil_fit[j] = kpod_fit$silh
+    setTxtProgressBar(pb, no_clusters[j])
   }
+  close(pb)
   
   withinss_range = range(rand_fit,best_fit)
   par(mfrow=c(4,1),mar=c(2.2,4,0,0),oma=c(3,0,.25,0.25))
@@ -324,4 +330,3 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   
   return(list(rand_SS=rand_fit,kpod_SS=best_fit,sil_val=sil_fit))
 }
-
