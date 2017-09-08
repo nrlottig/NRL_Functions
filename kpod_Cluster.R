@@ -330,6 +330,7 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   }
   
   sum.sil =aggregate(sil_sum$Sil_values,by=list(sil_sum$cluster_size,sil_sum$cluster_ID),FUN=mean)
+  sum.silmedian = aggregate(sil_sum$Sil_values,by=list(sil_sum$cluster_size),FUN=median)
   
   withinss_range = range(rand_fit,best_fit)
   par(mfrow=c(4,1),mar=c(2.2,4,0,0),oma=c(3,0,.25,0.25))
@@ -340,6 +341,7 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   plot(no_clusters,(rand_fit-best_fit),type="b",ylab="Difference between Random & Best",xlab="")
   plot(sil_sum[,1:2],col="grey",ylab = "Silhouette Coefficient",xlab ="")
   points(no_clusters,sil_fit,col="green",pch=16,cex=2,type="b")
+  points(sum.silmedian$Group.1,sum.silmedian$x,col="red",pch=16,cex=2,type="b")
   points(sum.sil$Group.1,sum.sil$x,col="black",pch=16,cex=1)
   mtext(side=1,line=2.5,text = "Number of Clusters",cex=0.75)
   # plot(Cluster_Vec,(best_fit-rand_fit),type="l”)
