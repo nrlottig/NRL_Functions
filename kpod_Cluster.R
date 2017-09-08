@@ -188,7 +188,7 @@ initialImpute <- function(X){
 #' 
 #' @author Jocelyn T. Chi
 #' 
-kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
+kpod <- function(X,k,kmpp_flag=TRUE,maxiter=1000){
   
   n <- nrow(X)
   p <- ncol(X)
@@ -197,6 +197,7 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
   obj_vals <- double(maxiter)
   fit <- double(maxiter)
   m.sil <- double(maxiter)
+  sil_val <- vector(mode="list",length=maxiter)
   
   missing <- findMissing(X)
   
@@ -205,14 +206,15 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
   
   ## Use kmpp to select initial centers
   init_centers <- kmpp(X_copy, k)
-  temp <- kmeans(X_copy,init_centers,iter.max = 10000,nstart = 200)
+  temp <- kmeans(X_copy,init_centers,iter.max = 1000,nstart = 200)
   clusts <- temp$cluster
   centers <- temp$centers
   # fit[1] <- 1-(sum(temp$withinss)/temp$totss)
   fit[1] <- sum(temp$withinss)        
   t.sil = silhouette(temp$cluster, dist(X_copy))
   m.sil[1] = mean(t.sil[,3])
-  
+  sil_val[[1]] = t.sil[,3]
+
   # Make cluster matrix
   clustMat <- centers[clusts,]
   
@@ -222,7 +224,6 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
   #obj_vals[1] <- temp$obj
   obj_vals[1] <- sum((X[-missing]-clustMat[-missing])^2)
   cluster_vals[[1]] <- clusts
-  
   # Run remaining iterations
   for (i in 2:maxiter){
     temp <- assign_clustpp(X_copy,centers,kmpp_flag)
@@ -231,6 +232,7 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
     fit[i] <- temp$fit
     t.sil = silhouette(temp$clusts, dist(X_copy))
     m.sil[i] = mean(t.sil[,3])
+    sil_val[[i]] = t.sil[,3]
     
     # Impute clusters
     clustMat <- centers[clusts,]
@@ -238,14 +240,14 @@ kpod <- function(X,k,kmpp_flag=TRUE,maxiter=10000){
     
     obj_vals[i] <- sum((X[-missing]-clustMat[-missing])**2)
     cluster_vals[[i]] <- clusts
-    
+    message(paste('Number of kmeans iterations =',i))
     if (all(cluster_vals[[i]] == cluster_vals[[i-1]])){
-      noquote('Clusters have converged.')
-      return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i],silh=m.sil[i],silh_list=m.sil[1:i]))
+      message('Clusters have converged.')
+      return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i],silh=m.sil[i],silh_list=m.sil[1:i],silh_vals=sil_val[i]))
       break
     }
   }
-  return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i],silh=m.sil[i],silh_list=m.sil[1:i]))
+  return(list(cluster=clusts,cluster_list=cluster_vals[1:i],obj_vals=obj_vals[1:i],fit=fit[i],fit_list=fit[1:i],silh=m.sil[i],silh_list=m.sil[1:i],silh_vals=sil_val[i]))
 }
 
 #' k-means++
@@ -294,6 +296,8 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   rand_fit = rep_len(NA,n.cluster)
   best_fit = rep_len(NA,n.cluster)
   sil_fit = rep_len(NA,n.cluster)
+  sil_val <- vector(mode="list",length=n.cluster)
+  cluster_vals <- vector(mode="list",length=n.cluster)
   pb <- txtProgressBar(min = 1, max = max(no_clusters), style = 3)
   for (j in 1:n.cluster){
     temp.fit = rep_len(NA, boots)
@@ -313,9 +317,19 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
     kpod_fit = kpod(X,no_clusters[j],kmpp_flag = TRUE)
     best_fit[j] = kpod_fit$fit
     sil_fit[j] = kpod_fit$silh
+    sil_val[[j]] = kpod_fit$silh_vals
+    cluster_vals[[j]] = kpod_fit$cluster
     setTxtProgressBar(pb, no_clusters[j])
   }
   close(pb)
+  
+  for(j in 1:n.cluster){
+  sil_sum1 = data.frame(cluster_size=rep(no_clusters[j],nrow(X)),Sil_values=sil_val[[j]][[1]],cluster_ID=cluster_vals[[j]])
+  if(j==1) sil_sum = sil_sum1
+  if(j>1) sil_sum = rbind(sil_sum,sil_sum1)
+  }
+  
+  sum.sil =aggregate(sil_sum$Sil_values,by=list(sil_sum$cluster_size,sil_sum$cluster_ID),FUN=mean)
   
   withinss_range = range(rand_fit,best_fit)
   par(mfrow=c(4,1),mar=c(2.2,4,0,0),oma=c(3,0,.25,0.25))
@@ -324,9 +338,11 @@ quant_no_clusters = function(X,no_clusters=2:7,boots=100){
   lines(no_clusters,best_fit,type="b",col="blue")
   legend('topright',legend=c("Best Fit","Random Fit"),lty=1,col=c("blue","red"))
   plot(no_clusters,(rand_fit-best_fit),type="b",ylab="Difference between Random & Best",xlab="")
-  plot(no_clusters,sil_fit,type="b",col="green",ylab = "Mean Silhouette Coefficient",xlab ="")
+  plot(sil_sum[,1:2],col="grey",ylab = "Silhouette Coefficient",xlab ="")
+  points(no_clusters,sil_fit,col="green",pch=16,cex=2,type="b")
+  points(sum.sil$Group.1,sum.sil$x,col="black",pch=16,cex=1)
   mtext(side=1,line=2.5,text = "Number of Clusters",cex=0.75)
   # plot(Cluster_Vec,(best_fit-rand_fit),type="l”)
   
-  return(list(rand_SS=rand_fit,kpod_SS=best_fit,sil_val=sil_fit))
+  return(list(rand_SS=rand_fit,kpod_SS=best_fit,msil_val=sil_fit,sil_vals=sil_val))
 }
