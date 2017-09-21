@@ -34,7 +34,7 @@ TS.Length = function(data,record.length,missing.freq){
       new.data[i,2:ncol(new.data)] = rollapply(x.temp,width = record.length[x],FUN=RL)
     }
 
-    missing.freq.t = floor(record.length[x] - (missing.freq/100*record.length[x]))
+    missing.freq.t = ceiling(record.length[x] - (missing.freq/100*record.length[x]))
     summary.data = data.frame(matrix(NA, nrow=length(missing.freq.t), ncol=ncol(new.data)))
 
     for(j in 1:length(missing.freq.t)){
