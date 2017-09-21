@@ -9,7 +9,7 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
 require(RCurl)
 
 #Example data file take from Oliver et al. 2017 (chla data)
-dat = read.csv(text=getURL("https://raw.githubusercontent.com/nrlottig/NRL_Functions/master/datafiles/data_optimize_ts_window.csv"), header=T)
+#dat = read.csv(text=getURL("https://raw.githubusercontent.com/nrlottig/NRL_Functions/master/datafiles/data_optimize_ts_window.csv"), header=T)
 
 #Function for identifying optimal/maximum time series and time periods of record based on two input criteria
 #record.length is length or long-term record to be analyzed or vector of potential long-term record lengths
@@ -63,7 +63,7 @@ TS.Length = function(data,record.length,missing.freq){
 }
 
 #Example of running code
-temp=TS.Length(data = dat,record.length = c(10:24),missing.freq = c(10,20,30,40))
+#temp=TS.Length(data = dat,record.length = c(10:24),missing.freq = c(10,20,30,40))
 #Run with a single length of time to extract table of when to start time series
-temp=TS.Length(data = dat,record.length = 20,missing.freq = c(10,20,30,40))
+#temp=TS.Length(data = dat,record.length = 20,missing.freq = c(10,20,30,40))
 #Look at output file. 530 lakes have 14-20 years of data (30% max missing data) starting with 1994.
