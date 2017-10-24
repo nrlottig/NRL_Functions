@@ -1,5 +1,5 @@
 #Check to make sure you have all the needed packages installed
-packages <- c("RCurl", "reshape2", "zoo","map","maptools")
+packages <- c("RCurl", "reshape2", "zoo","maps","maptools","reshape2")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
@@ -14,6 +14,9 @@ plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
   #locos is LAGOS locus data table
   #param.name is string with parameter name for plotting purposes
   
+  require(maps)
+  require(maptools)
+  require(reshape2)
   data.complete = data[complete.cases(data[,1:3]),]
   names(data.complete)[3] = "value"
   data.complete$DoY = as.numeric(strftime(as.Date(data.complete$sampledate,format="%m/%d/%Y"), format = "%j"))
@@ -40,7 +43,7 @@ plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
     
   }
   data.wide <- dcast(data.full, lagoslakeid ~ year,mean)
-  ts.out = TS.Length(data = data.wide,record.length = TSlength,miss.freq = miss.freq)
+  ts.out = TS.Length(data = data.wide,record.length = TSlength,missing.freq = miss.freq)
   start.year = as.numeric(names(ts.out)[which(ts.out==max(ts.out))[length(which(ts.out==max(ts.out)))]])
   years.data = seq(from=start.year,to=start.year+TSlength-1,by=1)
   
