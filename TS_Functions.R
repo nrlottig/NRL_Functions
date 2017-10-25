@@ -5,7 +5,7 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
 }
 
 #platLAGOSLT.data extracts timeseries from LAGOS data that meet criteria set in function, plots the data, and returns a dataframe of the 
-#mean summer values for the lakes with associated time series. The algorithm will automatically select the time period that has the most lakes 
+#median summer values for the lakes with associated time series. The algorithm will automatically select the time period that has the most lakes 
 #and if more than one time period has the same (max) number of lakes, it will select the most recent time period.
 plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
   #Data columns (1) lagoslakeid, (2) sampledate [format="%m/%d/%Y"], (3) parameter value 
@@ -49,7 +49,7 @@ plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
   
   #subset data to years of interest with correct record length
   data.full = data.full[which(data.full$year %in% years.data),]
-  data.wide <- dcast(data.full, lagoslakeid ~ year,mean)
+  data.wide <- dcast(data.full, lagoslakeid ~ year,median)
   data.wide$recordlength = rowSums(!is.na(data.wide[,2:(TSlength+1)]))
   data.wide = data.wide[which(data.wide$recordlength>=(TSlength-(TSlength*miss.freq/100))),]
   data.wide = merge(data.wide,locos[,c("lagoslakeid","nhd_lat","nhd_long")])
