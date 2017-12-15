@@ -6,13 +6,16 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
 
 #platLAGOSLT.data extracts timeseries from LAGOS data that meet criteria set in function, plots the data, and returns a dataframe of the 
 #median summer values for the lakes with associated time series. The algorithm will automatically select the time period that has the most lakes 
-#and if more than one time period has the same (max) number of lakes, it will select the most recent time period.
-plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
+#and if more than one time period has the same (max) number of lakes, it will select the most recent time period. Function returns
+#a list with the data for the time period and a vector of number of lakes with LT data through time.
+plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name,set.year=NULL){
   #Data columns (1) lagoslakeid, (2) sampledate [format="%m/%d/%Y"], (3) parameter value 
   #TSlength is length of time series desired
   #missing.freq  is amount of missing data within each TS as a percent (e.g., 20)
   #locos is LAGOS locus data table
   #param.name is string with parameter name for plotting purposes
+  #set.year is numeric if you want to choose starting year for example to match up with another time series. default is
+    #to choose most recent and set.year = NULL
   
   require(maps)
   require(maptools)
@@ -44,7 +47,7 @@ plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
   }
   data.wide <- dcast(data.full, lagoslakeid ~ year,mean)
   ts.out = TS.Length(data = data.wide,record.length = TSlength,missing.freq = miss.freq)
-  start.year = as.numeric(names(ts.out)[which(ts.out==max(ts.out))[length(which(ts.out==max(ts.out)))]])
+  if(is.null(set.year)) start.year = as.numeric(names(ts.out)[which(ts.out==max(ts.out))[length(which(ts.out==max(ts.out)))]]) else start.year = set.year
   years.data = seq(from=start.year,to=start.year+TSlength-1,by=1)
   
   #subset data to years of interest with correct record length
@@ -59,7 +62,7 @@ plotLAGOSLT.data = function(data,TSlength,miss.freq,locos,param.name){
   mtext(side=3,line=-1,paste(param.name," LT Data (",range(years.data)[1],":",range(years.data)[2],")",sep=""))
   mtext(side=3,line=-2,paste(nrow(data.wide)," Lakes w/ ",(TSlength-(TSlength*miss.freq/100))," - ",TSlength," yrs of data",sep=""))
   mtext(side=3,line=-3,paste(TSlength," yr record w/ max of ",miss.freq,"% missing data",sep=""))
-  return(data.wide)
+  return(list(data = data.wide,numObs = ts.out))
 }
 #Example
 #out = plotLAGOSLT.data(data=LAGOS_Limno[,c("lagoslakeid","sampledate","tp")],TSlength = 25,miss.freq = 20,locos = LAGOS_Lakes,param.name = "Total P")
