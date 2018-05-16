@@ -121,7 +121,7 @@ aggregate_metab <- function(x,width=3){
     }
     return(xnew)
   }
-#calculate centered aggregation on even number 
+#calculate centered aggregation on even number
   aggregate_even_center <- function(x,width) {
     rowMeans(cbind(aggregate_even(x,width),shift(aggregate_even(x,width),1)),na.rm=T)
   } 
@@ -135,12 +135,4 @@ aggregate_metab <- function(x,width=3){
   }
   return(x_aggregated)
 }
-
-
-
-
-######This code is for centering aggregated data when period of aggregation is a evan number
-######Essentially it weights tail values by 1/2 the other values in the aggregation
-
-
 
