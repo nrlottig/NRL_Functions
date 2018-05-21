@@ -1,14 +1,12 @@
-#Linearly interpolate values for strings (up to specified length) of missing data
-#CTS 31 Jul 2009
-
-#Inputs
-# dataIn:     A data.frame with two columns, first is "datetime", second is data
-# maxLength:  Maximum length of NA string that you are willing to interpolate across.
-#             NOTE that this is given in minutes
-# timeStep:   The time step of the data
-
-
 fillHoles <- function(dataIn,maxLength,timeStep)
+  #Linearly interpolate values for strings (up to specified length) of missing data
+  #CTS 31 Jul 2009
+  
+  #Inputs
+  # dataIn:     A data.frame with two columns, first is "datetime", second is data
+  # maxLength:  Maximum length of NA string that you are willing to interpolate across.
+  #             NOTE that this is given in minutes
+  # timeStep:   The time step of the data
 {
   
   #Number of rows in dataIn
@@ -75,11 +73,12 @@ fillHoles <- function(dataIn,maxLength,timeStep)
   
 }
 
-####Code for aggregating data
-# Inputs
-# x: vector of data that you want to aggregate over a rolling time period
-# width: number of observations to aggregate over
+
 aggregate_metab <- function(x,width=3){
+  ####Code for aggregating data
+  # Inputs
+  # x: vector of data that you want to aggregate over a rolling time period
+  # width: number of observations to aggregate over
   packages = c("zoo")
   package.check <- lapply(packages, FUN = function(x) {
     if (!require(x, character.only = TRUE)) {
@@ -135,4 +134,36 @@ aggregate_metab <- function(x,width=3){
   }
   return(x_aggregated)
 }
-
+merge_met_data <- function(buoy,airport,time_step){
+  #buoy is a two column data frame of buoy data. column 1 is datetime,
+  #column 2 is met data
+  #airport is a two column data frame of airport met data. Column 1 is datetime,
+  #   column 2 is met data to match buoy
+  #time_step is the timestep of buoy data in seconds
+  ###Fix for requiring lubridate and tidyverse
+  
+  packages = c("tidyverse","lubridate")
+  package.check <- lapply(packages, FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+      library(x, character.only = TRUE)
+    }
+  })
+  
+  sample.year <- year(airport$datetime[1])
+  
+  dt_seq = data.frame(datetime = seq(
+    from=as_datetime(paste(sample.year,"-01-01 00:00:00")),
+    to=as_datetime(paste(sample.year,"-12-31 23:59:00")),
+    by=time_step))
+  
+  dat = dt_seq %>% 
+    left_join(buoy) %>% 
+    left_join(airport,by = "datetime")
+  
+  dat[[2]][which(is.na(dat[[2]]))] <- dat[[3]][which(is.na(dat[[2]]))]
+  
+  dat <- dat[,c(1:2)]
+  names(dat) = names(buoy)
+  return(dat)
+}
