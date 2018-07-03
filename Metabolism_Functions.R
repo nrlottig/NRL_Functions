@@ -134,12 +134,14 @@ aggregate_metab <- function(x,width=3){
   }
   return(x_aggregated)
 }
-merge_met_data <- function(buoy,airport,time_step){
+merge_met_data <- function(buoy,airport,time_step, startdate, enddate){
   #buoy is a two column data frame of buoy data. column 1 is datetime,
   #column 2 is met data
   #airport is a two column data frame of airport met data. Column 1 is datetime,
   #   column 2 is met data to match buoy
-  #time_step is the timestep of buoy data in seconds
+  #time_step is the timestep of buoy data in minutes
+  #start and enddates are the start and end date for the data being merged
+  # defaults to range of buoy data
   ###Fix for requiring lubridate and tidyverse
   
   packages = c("tidyverse","lubridate")
@@ -150,12 +152,16 @@ merge_met_data <- function(buoy,airport,time_step){
     }
   })
   
-  sample.year <- year(airport$datetime[1])
+  #get start and end dates if they are not provided. defaults to range of buoy
+  #data.
+  if(is.null(startdate)) startdate <- as_date(min(buoy$datetime,na.rm=TRUE))
+  if(is.null(enddate)) startdate <- as_date(min(buoy$datetime,na.rm=TRUE))
+  
   
   dt_seq = data.frame(datetime = seq(
-    from=as_datetime(paste(sample.year,"-01-01 00:00:00")),
-    to=as_datetime(paste(sample.year,"-12-31 23:59:00")),
-    by=time_step))
+    from=as_datetime(paste(startdate," 00:00:00")),
+    to=as_datetime(paste(enddate," 23:59:00")),
+    by=time_step*60))
   
   dat = dt_seq %>% 
     left_join(buoy) %>% 
