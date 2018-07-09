@@ -173,3 +173,20 @@ merge_met_data <- function(buoy,airport,time_step, startdate, enddate){
   names(dat) = names(buoy)
   return(dat)
 }
+
+######
+# Determine Time Frequence of data
+######
+time.freq <- function(x,obs.freq=c(1,10,30)){
+  x_diff <- abs(as.numeric(difftime(x[-length(x)],x[-1],units="mins")))
+  freq.dat <- data.frame(datetime=x,time_freq = c(x_diff,NA))
+  freq.dat <- freq.dat %>% 
+    mutate(time_freq=replace(time_freq,which(!(time_freq %in% obs.freq)),NA)) %>%
+    drop_na() %>% 
+    group_by(sampledate=as_date(datetime)) %>% 
+    summarize(time.freq = paste(unique(time_freq,na.rm=TRUE),collapse = ","))
+  print(freq.dat[which(!(freq.dat$time.freq %in% obs.freq)),])
+  return(freq.dat)
+}
+
+
