@@ -189,4 +189,21 @@ time.freq <- function(x,obs.freq=c(1,10,30)){
   return(freq.dat)
 }
 
+######
+# Exract aggregated data
+######
+extract.metab.data <- function(dataIn, time.freq){
+  #DataIn: output from aggregate.metab function
+  #time.freq: time frequency in minutes of data aggregation from aggregate.metab
+  start.datetime <- min(dataIn$datetime,na.rm=TRUE)
+  end.datetime <- max(dataIn$datetime,na.rm=TRUE)
+  var.names <- names(dataIn)
+  dt_seq = data.frame(datetime = seq(
+    from=as_datetime(start.datetime),
+    to=as_datetime(end.datetime),
+    by=time.freq*60))
+  dataIn <- dataIn %>% right_join(dt_seq) %>% select(datetime,val.30)
+  names(dataIn)[2] <- var.names[2]
+  return(dataIn)
+}
 
