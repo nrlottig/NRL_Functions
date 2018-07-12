@@ -195,8 +195,8 @@ time.freq <- function(x,obs.freq=c(1,10,30)){
 extract.metab.data <- function(dataIn, time.freq){
   #DataIn: output from aggregate.metab function
   #time.freq: time frequency in minutes of data aggregation from aggregate.metab
-  start.datetime <- min(floor_date(dataIn$datetime,units="hour"),na.rm)
-  end.datetime <- max(ceiling_date(dataIn$datetime,units="hour"),na.rm)
+  start.datetime <- min(floor_date(dataIn$datetime,unit="hours"))
+  end.datetime <- max(ceiling_date(dataIn$datetime,unit="hours"))
   var.names <- names(dataIn)
   dt_seq = data.frame(datetime = seq(
     from=as_datetime(start.datetime),
@@ -221,4 +221,17 @@ identifyPch <- function(x, y = NULL, n = 2, pch = 19, ...)
     res <- c(res, ans)
   }
   res
+}
+complete.ts <- function(dataIn,time.freq) {
+  #Function creates complete ts without missing time periods
+  #DataIn: two colomn dataframe. 1st column datetime, 2nd column data
+  #time.freq: time frequency of data
+  start.datetime <- min(floor_date(dataIn$datetime,unit="hours"))
+  end.datetime <- max(ceiling_date(dataIn$datetime,unit="hours"))
+  dt_seq = data.frame(datetime = seq(
+    from=as_datetime(start.datetime),
+    to=as_datetime(end.datetime),
+    by=time.freq*60))
+  dataIn <- dataIn %>% right_join(dt_seq)
+  return(dataIn)
 }
