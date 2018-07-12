@@ -195,8 +195,8 @@ time.freq <- function(x,obs.freq=c(1,10,30)){
 extract.metab.data <- function(dataIn, time.freq){
   #DataIn: output from aggregate.metab function
   #time.freq: time frequency in minutes of data aggregation from aggregate.metab
-  start.datetime <- min(dataIn$datetime,na.rm=TRUE)
-  end.datetime <- max(dataIn$datetime,na.rm=TRUE)
+  start.datetime <- min(floor_date(dataIn$datetime,units="hour"),na.rm)
+  end.datetime <- max(ceiling_date(dataIn$datetime,units="hour"),na.rm)
   var.names <- names(dataIn)
   dt_seq = data.frame(datetime = seq(
     from=as_datetime(start.datetime),
